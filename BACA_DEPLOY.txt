@@ -1,0 +1,21 @@
+DEPLOY KE NETLIFY · Z10 TABUNG
+
+Isi folder:
+  index.html                      halaman web
+  netlify/functions/visit.mjs     penghitung total kunjungan (Netlify Functions + Netlify Blobs)
+  netlify.toml, package.json      setting Netlify
+
+PENTING: counter kunjungan butuh Netlify Functions. Drag & drop di app.netlify.com/drop
+TIDAK menjalankan function (halaman tetap jalan, tapi total kunjungan tampil "—").
+
+Cara A · lewat GitHub (disarankan)
+  1. Upload semua isi folder ini ke repo GitHub baru.
+  2. Netlify > Add new site > Import an existing project > pilih repo.
+  3. Build command: kosongkan · Publish directory: .  > Deploy.
+
+Cara B · Netlify CLI
+  1. Install Node.js, lalu:  npm install -g netlify-cli
+  2. Di folder ini:          npm install
+  3.                         netlify deploy --prod
+
+Kode akses admin tidak ikut dihitung. Masuk umum dihitung 1x per sesi browser.

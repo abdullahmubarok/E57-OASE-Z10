@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1318">
+<title>Titik Proyektor Tabung Z10</title>
+<style>
+/* Layout: alat kerja gelap ala ruang kontrol — panel input kiri, denah + 3D kanan, composition 3240×1080 di bawah, config teks paling bawah */
+:root{
+  --bg:#0f1318; --panel:#161c23; --panel2:#1d252e; --fg:#e7ecf1; --muted:#8e9aa7; --line:#2a3440;
+  --band:#e8b10e; --accent:#46b6ff; --p1:#46b6ff; --p2:#ff5fc8; --p3:#8ee04f; --p4:#ffa23a; --p5:#b68bff; --p6:#4fe3d1; --warn:#ff7a66; --ax:#ff5a5a; --ay:#6be36b; --az:#5aa0ff;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14.5px;line-height:1.45}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:grid;gap:16px}
+h1{font-family:var(--f-display);font-weight:700;font-size:2rem;letter-spacing:.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:600;font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase;margin:0 0 8px;color:var(--muted)}
+.sub{color:var(--muted);margin:2px 0 0;max-width:80ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}
+.top{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:1100px){.top{grid-template-columns:1fr 1fr}.top .inputs{grid-column:1/-1}}
+@media (max-width:700px){.top{grid-template-columns:1fr}.list{max-height:none}h1{font-size:1.6rem}.grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  input[type=number],select{font-size:16px;padding:8px}button{padding:10px 14px}}
+.pj{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:6px;padding:10px;display:grid;gap:8px;background:var(--panel2)}
+.pj header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pj header b{font-family:var(--f-display);font-size:1.15rem;letter-spacing:.03em;color:var(--c)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+.grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sec{font:600 .72rem var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--fg);opacity:.75;border-top:1px solid var(--line);padding-top:6px}
+[hidden]{display:none!important}
+.lt{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ax{display:inline-block;min-width:1.1em;text-align:center;border-radius:3px;font-weight:700;color:#0a0d11;margin-right:3px}
+.ax.x{background:var(--ax)} .ax.y{background:var(--ay)} .ax.z{background:var(--az)}
+label{display:grid;gap:2px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+label.chk{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:.85rem;color:var(--fg)}
+input[type=number],input[type=password],select,textarea{font:500 .92rem var(--f-mono);padding:5px 7px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+textarea{font-size:.8rem;min-height:120px;resize:vertical}
+input:focus-visible,select:focus-visible,button:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:600 .85rem var(--f-body);padding:6px 11px;border-radius:5px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
+button.primary{background:var(--accent);color:#06121c;border-color:var(--accent)}
+button.ghost{background:none;padding:3px 8px;font-size:.78rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.list{display:grid;gap:10px;max-height:820px;overflow:auto;padding-right:2px}
+canvas{display:block;width:100%;border-radius:6px;background:#0a0d11}
+#plan{aspect-ratio:1/1;cursor:crosshair;touch-action:none}
+#three{width:100%;aspect-ratio:1/1;border-radius:6px;background:#0a0d11;touch-action:none;cursor:grab}
+.scroll{overflow-x:auto}
+#comp{min-width:900px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;font-family:var(--f-mono);font-size:.82rem;white-space:nowrap}
+th{font-family:var(--f-body);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:0}
+.hint{font-size:.82rem;color:var(--muted)}
+.warn{color:var(--warn)}
+.steps{margin:0;padding-left:20px;display:grid;gap:4px;color:var(--muted);font-size:.88rem}
+.steps b{color:var(--fg)}
+.toast{font-size:.82rem;color:var(--p3)}
+
+.adm{display:none!important}
+body[data-role="admin"] .adm{display:revert!important}
+body[data-role="admin"] .nonadm{display:none}
+#gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:16px;overflow:auto}
+body:not([data-role="none"]) #gate{display:none}
+.gcard{width:min(460px,100%);display:grid;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px}
+.gcard h1{font-size:2.1rem}
+.eyebrow{margin:0;font:600 .72rem var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+button.big{font-size:1.05rem;padding:12px}
+.gcode{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:12px}
+.gcode .row{flex-wrap:nowrap}.gcode input{flex:1;min-width:0}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.tb-in{max-width:1440px;margin:0 auto;padding:8px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.tb-title{font-family:var(--f-display);font-size:1.15rem;letter-spacing:.04em}
+.tb-stat{color:var(--muted);font-size:.88rem;margin-left:auto}.tb-stat b{font-family:var(--f-mono);color:var(--fg);font-size:1rem;margin-left:4px}
+.badge{font:600 .72rem var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+body[data-role="admin"] .badge{color:#06121c;background:var(--p3);border-color:var(--p3)}
+canvas.wide{min-width:1240px}
+.outs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+button.out{display:grid;gap:4px;text-align:left;padding:14px;border-radius:8px}
+button.out b{font-family:var(--f-display);font-size:1.15rem;letter-spacing:.03em}
+button.out span{font-weight:400;font-size:.82rem;line-height:1.35;opacity:.85}
+.pv{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pv figure{margin:0;display:grid;gap:4px}
+.pv figcaption{font:600 .85rem var(--f-body);color:var(--c)}
+.pv canvas{aspect-ratio:16/9;border:1px solid var(--line)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+
+</head><body data-role="none">
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gTitle">
+  <div class="gcard">
+    <p class="eyebrow">Zona 10 · Mapping Warisan Sumbu Filosofi</p>
+    <h1 id="gTitle">Titik Proyektor Tabung Z10</h1>
+    <p class="sub">Simulasi posisi proyektor, area tembak dinding dalam, dan kanvas konten untuk tabung Ø 400 × 420 cm.</p>
+    <button type="button" class="primary big" id="gIn">Masuk</button>
+    <form id="gForm" class="gcode" autocomplete="off">
+      <label for="gCode">Kode akses</label>
+      <div class="row"><input id="gCode" type="password" inputmode="text" placeholder="Masukkan kode"><button type="submit" id="gCodeBtn">Masuk dengan kode</button></div>
+      <p class="hint warn" id="gErr" aria-live="polite"></p>
+    </form>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="tb-in">
+    <b class="tb-title">Tabung Z10</b>
+    <span class="tb-stat">Total kunjungan <b id="visits">—</b></span>
+    <span class="badge" id="roleBadge">Umum</span>
+    <button type="button" class="ghost" id="logout">Keluar</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Titik Proyektor Tabung Z10</h1>
+    <p class="sub">Tabung Ø 400 × 420 cm, proyeksi ke <b>dinding dalam</b> (putih). Dilihat dari dalam, pita naik dari kiri bawah ke kanan atas. Atur posisi tiap proyektor ViewSonic LS711HD (FHD laser short throw) di dalam tabung dan lihat ke mana tembakannya jatuh.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Cara pakai</h2>
+    <ol class="steps">
+      <li><b>Geser titik proyektor di denah</b> (tampak atas) atau ketik posisi lensanya dalam <b>X, Y, Z</b> (cm). Titik 0 = pusat dasar tabung · <b>X+</b> ke arah 270° · <b>Y</b> tinggi dari lantai · <b>Z+</b> ke arah titik A (0°). Sudut dihitung searah jarum jam dilihat dari atas, sama dengan kiri→kanan bila berdiri di dalam. Proyektor harus di dalam tabung (jarak dari pusat &lt; 200 cm).</li>
+      <li>Atur <b>arah bidik</b>: lurus menyeberang ke dinding seberang, ke sudut tertentu, atau ke titik XYZ bebas. Roll untuk proyektor yang dipasang miring.</li>
+      <li><b>Isi throw ratio</b> sesuai tipe proyektor (LS711HD = 0,496), tinggi lensa, dan titik bidik.</li>
+      <li>Cek <b>composition</b>: warna = area yang kena tiap proyektor, arsir putih = overlap (zona blend).</li>
+      <li>Konten diedit di <b>Canvas Panjang</b> (pita utuh), lalu dipindah ke <b>Canvas Resolume</b> untuk render: bagian x ≥ 3240 digeser −3240 px.</li>
+      <li class="adm"><b>Output</b> di paling bawah: paket Resolume, After Effects, Proyektor, atau semuanya (ZIP).</li>
+    </ol>
+  </section>
+
+  <div class="top">
+    <section class="panel inputs">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0">Proyektor</h2>
+        <div class="row"><button type="button" id="add">+ Tambah</button><button type="button" id="reset" class="ghost">Reset</button></div>
+      </div>
+      <div class="list" id="list"></div>
+    </section>
+    <section class="panel">
+      <h2>Denah · tampak atas</h2>
+      <canvas id="plan" width="900" height="900" tabindex="0" aria-label="Denah tampak atas tabung dan proyektor; seret titik untuk memindah proyektor"></canvas>
+      <p class="hint">Seret titik berwarna. Garis tipis = arah tembak. Skala grid 1 m.</p>
+    </section>
+    <section class="panel">
+      <h2>3D · posisi tembakan</h2>
+      <div id="three" role="img" aria-label="Tampilan 3D tabung dengan sorotan proyektor"></div>
+      <div class="row" style="margin-top:8px"><button type="button" id="vFront">Depan 0°</button><button type="button" id="vBack">Belakang 180°</button><button type="button" id="vTop">Atas</button></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Composition Resolume 3240 × 1080 · area kena proyektor</h2>
+    <div class="scroll"><canvas id="comp" width="3240" height="1080" aria-label="Composition 3240 kali 1080 dengan area cakupan proyektor"></canvas></div>
+    <p class="hint">Kuning = pita mapping · warna transparan = cakupan proyektor · arsir putih = overlap · garis putus = slice Resolume yang disarankan.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Canvas After Effects · 1 · Canvas Panjang 4654 × 1080 (tempat edit)</h2>
+    <p class="hint" style="margin:0 0 8px">Pita utuh dari A sampai C tanpa terpotong. Susun konten memanjang ke kanan di sini. Garis biru = batas 3240 px: semua yang di kanannya nanti digeser −3240 px ke lilitan atas.</p>
+    <div class="scroll"><canvas id="cvLong" width="4654" height="1080" class="wide" aria-label="Canvas panjang 4654 kali 1080"></canvas></div>
+    <div class="row adm" style="margin-top:8px"><button type="button" data-png="long:guide">PNG Guide</button><button type="button" data-png="long:mask">PNG Mask</button><button type="button" data-png="long:overlay">PNG Overlay (transparan)</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>Canvas After Effects · 2 · Canvas Resolume 3240 × 1080 (tempat render)</h2>
+    <p class="hint" style="margin:0 0 8px">Ukuran sama dengan composition Resolume. Hasil canvas panjang dimasukkan 2 kali: lilitan 1 di x = 0, lilitan 2 digeser −3240 px. Render comp ini untuk Resolume.</p>
+    <div class="scroll"><canvas id="cvRes" width="3240" height="1080" aria-label="Canvas Resolume 3240 kali 1080"></canvas></div>
+    <div class="row adm" style="margin-top:8px"><button type="button" data-png="res:guide">PNG Guide</button><button type="button" data-png="res:mask">PNG Mask</button><button type="button" data-png="res:overlay">PNG Overlay (transparan)</button><button type="button" data-png="res:grid">PNG Test Grid</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>Tampilan proyektor · output 1920 × 1080</h2>
+    <p class="hint" style="margin:0 0 10px">Gambar yang harus keluar dari tiap proyektor (sudah di-warp ke lengkung dinding). Hitam = sinar tidak kena tabung.</p>
+    <div class="pv" id="pv"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Hasil per proyektor</h2>
+    <div class="scroll"><table id="tbl"></table></div>
+    <p class="hint" id="notes"></p>
+  </section>
+
+  <section class="panel adm">
+    <h2>Data Setup</h2>
+    <p class="hint" style="margin:0 0 8px">Ringkasan posisi proyektor dan cakupannya. Salin untuk catatan atau dokumentasi, dan bagian JSON-nya bisa diimpor di perangkat lain supaya setting sama.</p>
+    <div class="row" style="margin-bottom:8px"><button type="button" class="primary" id="copy">Salin Data Setup</button><span class="toast" id="toast" aria-live="polite"></span></div>
+    <textarea id="cfg" readonly aria-label="Data setup proyektor"></textarea>
+    <details style="margin-top:10px"><summary class="hint" style="cursor:pointer">Impor Data Setup</summary>
+      <textarea id="imp" placeholder="Tempel Data Setup / JSON di sini"></textarea>
+      <div class="row" style="margin-top:6px"><button type="button" id="doImp">Terapkan</button><span class="hint" id="impMsg"></span></div>
+    </details>
+  </section>
+
+  <section class="panel adm" id="outputs">
+    <h2>Output</h2>
+    <div class="outs">
+      <button type="button" class="out" data-pack="resolume"><b>Paket Resolume</b><span>Setting Resolume (angka untuk diinput) · Guide, Mask, Test Grid 3240 × 1080 · Slice per proyektor</span></button>
+      <button type="button" class="out" data-pack="ae"><b>Paket After Effects</b><span>Canvas Panjang 4654 & Canvas Resolume 3240 (guide, mask, overlay) · Script AE otomatis · Panduan</span></button>
+      <button type="button" class="out" data-pack="proj"><b>Paket Proyektor</b><span>Output & Mask 1920 × 1080 tiap proyektor untuk cek di lokasi</span></button>
+      <button type="button" class="out primary" data-pack="all"><b>Semua (ZIP)</b><span>Gabungan ketiga paket + Data Setup</span></button>
+    </div>
+    <p class="toast" id="expMsg" aria-live="polite"></p>
+  </section>
+  <p class="hint nonadm" style="text-align:center">Output dan Data Setup tersedia untuk akses dengan kode.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ===== Geometri tetap (cm) ===== */
+const R=200,H=420,C=2*Math.PI*R, BASE=630, W188=188, MID=630;
+const TH=Math.asin(W188/BASE), TN=Math.tan(TH), LEG=Math.sqrt(BASE*BASE-W188*W188), L=LEG+MID, TOP=L*Math.sin(TH), SPAN=BASE+L*Math.cos(TH);
+const CW=3240, CH=1080, KX=CW/C, KY=CH/H;
+const COLORS=['--p1','--p2','--p3','--p4','--p5','--p6'];
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $=id=>document.getElementById(id);
+const f1=v=>(Math.round(v*10)/10+0).toLocaleString('id-ID');
+const rad=d=>d*Math.PI/180, deg=r=>r*180/Math.PI;
+const norm360=a=>((a%360)+360)%360;
+// konvensi sudut φ: searah jarum jam dilihat dari atas = kiri→kanan dilihat dari DALAM. Titik dunia: X=-r·sinφ, Z=r·cosφ
+const W3=(r,ph,y)=>[-r*Math.sin(ph),y,r*Math.cos(ph)];
+
+// pita: x composition (cm, 0..C, kiri=0°) dan tinggi y (cm)
+function inBand(xc,y){
+  const xo=((xc%C)+C)%C; // tampak dalam: A kiri, naik ke kanan
+  for(let k=0;k<3;k++){const X=xo+k*C; if(X>SPAN) break;
+    const lo=Math.max(0,(X-BASE)*TN), hi=Math.min(TOP,X*TN); if(y>=lo&&y<=hi) return true}
+  return false;
+}
+
+/* ===== State ===== */
+const NEWP=(i,pos)=>({name:'P'+(i+1),pos,dist:170,h:210,aimMode:'lurus',aim:norm360(pos+180),aimH:210,aimX:0,aimY:210,aimZ:0,roll:0,throw:0.496,orient:'landscape',shift:0});
+const DEF=()=>[240,0,120].map((a,i)=>NEWP(i,a)); // P1 menembak 60°, P2 180°, P3 300°
+const fixP=p=>{const d=NEWP(0,p.pos||0);const q=Object.assign(d,p);if(!q.aimMode)q.aimMode=p.aimLock===false?'sudut':'lurus';delete q.aimLock;return q};
+let PJ;
+try{PJ=JSON.parse(localStorage.getItem('z10pj_dalam')||'null')}catch(e){PJ=null}
+if(!Array.isArray(PJ)||!PJ.length) PJ=DEF(); PJ=PJ.map(fixP);
+const save=()=>{try{localStorage.setItem('z10pj_dalam',JSON.stringify(PJ))}catch(e){}};
+
+/* ===== Proyeksi ===== */
+function basis(p){
+  const P=W3(p.dist,rad(p.pos),p.h);
+  let T;
+  if(p.aimMode==='xyz') T=[p.aimX,p.aimY,p.aimZ];
+  else {const t=rad(p.aimMode==='sudut'?p.aim:p.pos+180); T=W3(R,t,p.aimH);}
+  let f=sub(T,P); f=nrm(f); let r0=nrm(cross(f,[0,1,0])); const u0=cross(r0,f);
+  const rl=rad(p.roll||0), r=[0,1,2].map(i=>r0[i]*Math.cos(rl)+u0[i]*Math.sin(rl)), u=[0,1,2].map(i=>u0[i]*Math.cos(rl)-r0[i]*Math.sin(rl));
+  const land=p.orient!=='portrait';
+  return {P,f,r,u,T:p.throw, ar: land?9/16:16/9, shift:(p.shift||0)/100};
+}
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const nrm=a=>{const l=Math.hypot(...a)||1;return a.map(v=>v/l)};
+// surface point -> projector pixel [0..1] or null
+function hit(B,th,y){
+  const S=W3(R,th,y), n=W3(1,th,0);
+  const v=sub(S,B.P); if(dot(n,v)<=0) return null; // dinding dalam: sinar harus menuju keluar
+  if(B.P[0]*B.P[0]+B.P[2]*B.P[2]>=R*R) return null; // proyektor harus di dalam tabung
+  const z=dot(v,B.f); if(z<=1) return null;
+  const w=z/B.T, hh=w*B.ar;
+  const nx=dot(v,B.r)/w, ny=dot(v,B.u)/hh - B.shift;
+  if(Math.abs(nx)>.5||Math.abs(ny)>.5) return null;
+  const vl=Math.hypot(...v), cosi=dot(n,v)/vl;
+  const pxw=B.ar<1?1920:1080; // jumlah pixel horizontal
+  return {nx,ny,cm:(w/pxw)/Math.max(cosi,.05), cosi};
+}
+
+/* ===== Hitung cakupan ===== */
+const GX=324, GY=108; // grid 10 px
+let COV=[];
+function compute(){
+  COV=PJ.map(p=>{
+    const B=basis(p), cells=new Uint8Array(GX*GY); let n=0,bn=0,dens=0,cosS=0;
+    for(let j=0;j<GY;j++){const y=H-(j+.5)*H/GY;
+      for(let i=0;i<GX;i++){const xc=(i+.5)*C/GX, th=rad(xc/C*360), h=hit(B,th,y);
+        if(h){cells[j*GX+i]=1;n++; if(inBand(xc,y)){bn++;dens+=1/h.cm;cosS+=h.cosi}}}}
+    // rentang kolom (wrap aware)
+    const col=new Array(GX).fill(false); let ymin=GY,ymax=-1;
+    for(let j=0;j<GY;j++)for(let i=0;i<GX;i++) if(cells[j*GX+i]){col[i]=true;ymin=Math.min(ymin,j);ymax=Math.max(ymax,j)}
+    let segs=[];
+    if(col.some(v=>v)){
+      // cari gap terpanjang lalu mulai setelahnya
+      let best=-1,bestLen=-1,cur=0;
+      for(let k=0;k<GX*2;k++){const i=k%GX; if(!col[i]){cur++; if(cur>bestLen){bestLen=cur;best=i}} else cur=0}
+      if(bestLen>=GX){segs=[]} else {
+        let start=(best+1)%GX, len=GX-Math.min(bestLen,GX);
+        const a=start*10, b=a+len*10;
+        segs = b<=CW ? [[a,b]] : [[a,CW],[0,b-CW]];
+      }
+      if(col.every(v=>v)) segs=[[0,CW]];
+    }
+    return {cells,n,bn,dens:bn?dens/bn:0,cos:bn?cosS/bn:0,segs,y:[ymin*10,(ymax+1)*10]};
+  });
+}
+
+/* ===== Composition canvas ===== */
+const comp=$('comp'), cx=comp.getContext('2d');
+const base=document.createElement('canvas'); base.width=CW;base.height=CH;
+(function drawBase(){
+  const g=base.getContext('2d'); g.fillStyle='#202833';g.fillRect(0,0,CW,CH);
+  const img=g.getImageData(0,0,CW,CH), d=img.data, by=[232,177,14];
+  for(let py=0;py<CH;py++){const y=H-(py+.5)/KY;
+    for(let px=0;px<CW;px++){ if(inBand((px+.5)/KX,y)){const o=(py*CW+px)*4;d[o]=by[0];d[o+1]=by[1];d[o+2]=by[2]}}}
+  g.putImageData(img,0,0);
+  g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=2;g.font='600 24px Barlow, sans-serif';g.fillStyle='rgba(231,236,241,.6)';
+  for(let a=0;a<=360;a+=30){const x=a/360*CW;g.beginPath();g.moveTo(x,0);g.lineTo(x,CH);g.stroke();g.textAlign=a===0?'left':a===360?'right':'center';g.fillText(a+'°',x+(a===0?6:a===360?-6:0),CH-12)}
+  g.setLineDash([14,10]);g.strokeStyle='rgba(255,255,255,.35)';const yT=(H-TOP)*KY;g.beginPath();g.moveTo(0,yT);g.lineTo(CW,yT);g.stroke();g.setLineDash([]);
+  g.textAlign='right';g.fillText('367,4 cm · batas atas pita',CW-10,yT-10);
+  g.textAlign='left';g.fillStyle='#fff';g.font='700 30px Barlow, sans-serif';g.fillText('A',14,CH-40);
+})();
+function drawComp(){
+  cx.drawImage(base,0,0);
+  const cnt=new Uint8Array(GX*GY);
+  COV.forEach((cv,k)=>{const col=css(COLORS[k%6]);cx.fillStyle=col;cx.globalAlpha=.2;
+    for(let j=0;j<GY;j++)for(let i=0;i<GX;i++) if(cv.cells[j*GX+i]){cx.fillRect(i*10,j*10,10,10);cnt[j*GX+i]++}});
+  cx.globalAlpha=1;
+  // overlap hatch
+  cx.strokeStyle='rgba(255,255,255,.55)';cx.lineWidth=1.5;
+  for(let j=0;j<GY;j++)for(let i=0;i<GX;i++) if(cnt[j*GX+i]>1){const x=i*10,y=j*10;cx.beginPath();cx.moveTo(x,y+10);cx.lineTo(x+10,y);cx.stroke()}
+  // slices
+  COV.forEach((cv,k)=>{const col=css(COLORS[k%6]);cx.strokeStyle=col;cx.lineWidth=5;cx.setLineDash([22,12]);
+    cv.segs.forEach(([a,b])=>cx.strokeRect(a+3,cv.y[0]+3,b-a-6,cv.y[1]-cv.y[0]-6));cx.setLineDash([]);
+    if(cv.segs.length){const [a,b]=cv.segs[0];cx.fillStyle=col;cx.font='700 40px Barlow Condensed, sans-serif';cx.textAlign='left';cx.fillText(PJ[k].name,a+16,cv.y[0]+48)}});
+}
+
+/* ===== Denah ===== */
+const plan=$('plan'), pc=plan.getContext('2d'); let VIEW=2000; // cm radius tampil
+function p2w(px,py){const s=plan.width/(2*VIEW);return [(px-plan.width/2)/s,(py-plan.height/2)/s]}
+function w2p(X,Z){const s=plan.width/(2*VIEW);return [plan.width/2+X*s,plan.height/2+Z*s]}
+function drawPlan(){
+  VIEW=R+110;
+  const s=plan.width/(2*VIEW); pc.fillStyle='#0a0d11';pc.fillRect(0,0,plan.width,plan.height);
+  pc.strokeStyle='#1b232c';pc.lineWidth=1;
+  for(let v=-VIEW;v<=VIEW;v+=100){const [a]=w2p(v,0),[,b]=w2p(0,v);pc.beginPath();pc.moveTo(a,0);pc.lineTo(a,plan.height);pc.stroke();pc.beginPath();pc.moveTo(0,b);pc.lineTo(plan.width,b);pc.stroke()}
+  // tabung + band arc coverage per projector
+  const [ox,oy]=w2p(0,0);
+  pc.fillStyle='#202833';pc.beginPath();pc.arc(ox,oy,R*s,0,7);pc.fill();
+  COV.forEach((cv,k)=>{pc.strokeStyle=css(COLORS[k%6]);pc.lineWidth=7;
+    cv.segs.forEach(([a,b])=>{const t0=a/CW*2*Math.PI,t1=b/CW*2*Math.PI;pc.beginPath();
+      for(let t=t0;t<=t1+1e-6;t+=0.02){const rr2=R-6-k*6,[x,y]=w2p(-rr2*Math.sin(t),rr2*Math.cos(t));t===t0?pc.moveTo(x,y):pc.lineTo(x,y)}pc.stroke()})});
+  pc.strokeStyle='#8e9aa7';pc.lineWidth=2;pc.beginPath();pc.arc(ox,oy,R*s,0,7);pc.stroke();
+  pc.fillStyle='#8e9aa7';pc.font='600 22px Barlow, sans-serif';pc.textAlign='center';pc.textBaseline='middle';
+  for(let a=0;a<360;a+=30){const t=rad(a),rr=R+42,[x,y]=w2p(-rr*Math.sin(t),rr*Math.cos(t));pc.fillText(a+'°',x,y)}
+  const [ax,ay]=w2p(0,R);pc.fillStyle='#fff';pc.beginPath();pc.arc(ax,ay,7,0,7);pc.fill();pc.font='700 24px Barlow, sans-serif';pc.fillText('A',ax,ay-22);
+  pc.fillStyle='#8e9aa7';pc.font='600 20px Barlow, sans-serif';pc.fillText('DEPAN · titik A (0°) · sudut searah jarum jam',ox,plan.height-14);
+  // sumbu X (kanan) & Z (depan = bawah layar)
+  [[1,0,css('--ax'),'X+'],[0,1,css('--az'),'Z+'],[-1,0,css('--ax'),'X−'],[0,-1,css('--az'),'Z−']].forEach(([ux,uz,col,lab],i)=>{
+    const Lx=VIEW*.92,[x1,y1]=w2p(ux*(R+20),uz*(R+20)),[x2,y2]=w2p(ux*Lx,uz*Lx);pc.strokeStyle=col;pc.globalAlpha=i<2?.9:.35;pc.lineWidth=2;pc.setLineDash(i<2?[]:[8,8]);
+    pc.beginPath();pc.moveTo(x1,y1);pc.lineTo(x2,y2);pc.stroke();pc.setLineDash([]);
+    if(i<2){const ang=Math.atan2(y2-y1,x2-x1);pc.fillStyle=col;pc.beginPath();pc.moveTo(x2,y2);pc.lineTo(x2-14*Math.cos(ang-.4),y2-14*Math.sin(ang-.4));pc.lineTo(x2-14*Math.cos(ang+.4),y2-14*Math.sin(ang+.4));pc.fill()}
+    pc.fillStyle=col;pc.font='700 20px Barlow, sans-serif';pc.textAlign='center';pc.fillText(lab,x2+(ux?-ux*20:18),y2+(uz?-uz*18:-14));pc.globalAlpha=1});
+  // ticks per meter on axes
+  pc.fillStyle='#5d6874';pc.font='500 14px JetBrains Mono, monospace';
+  for(let m=100;m<VIEW;m+=100){const [tx,ty]=w2p(m,0);pc.fillText((m/100)+'m',tx,ty+16);const [zx,zy]=w2p(0,m);pc.fillText((m/100)+'m',zx+22,zy)}
+  PJ.forEach((p,k)=>{const B=basis(p),col=css(COLORS[k%6]);const [x,y]=w2p(B.P[0],B.P[2]);
+    // frustum horizontal
+    const half=Math.atan(.5/B.T*(B.ar<1?1:9/16));
+    pc.strokeStyle=col;pc.globalAlpha=.45;pc.lineWidth=2;
+    [-1,1].forEach(sg=>{const dir=[B.f[0]*Math.cos(half)+sg*B.r[0]*Math.sin(half),B.f[2]*Math.cos(half)+sg*B.r[2]*Math.sin(half)];const L2=2*R;const [x2,y2]=w2p(B.P[0]+dir[0]*L2,B.P[2]+dir[1]*L2);pc.beginPath();pc.moveTo(x,y);pc.lineTo(x2,y2);pc.stroke()});
+    pc.globalAlpha=1;pc.fillStyle=col;pc.beginPath();pc.arc(x,y,13,0,7);pc.fill();
+    pc.fillStyle='#06121c';pc.font='700 15px Barlow, sans-serif';pc.fillText(p.name,x,y+1);
+    pc.fillStyle=col;pc.font='600 17px JetBrains Mono, monospace';const [PX,PZ]=XZ(p);pc.fillText(`X${Math.round(PX)} Z${Math.round(PZ)}`,x,y-26);
+    if(p.aimMode==='xyz'){const [ax2,ay2]=w2p(p.aimX,p.aimZ);pc.strokeStyle=col;pc.lineWidth=2;pc.beginPath();pc.moveTo(ax2-8,ay2-8);pc.lineTo(ax2+8,ay2+8);pc.moveTo(ax2+8,ay2-8);pc.lineTo(ax2-8,ay2+8);pc.stroke()}});
+  pc.fillStyle='#8e9aa7';pc.textAlign='left';pc.font='500 18px JetBrains Mono, monospace';pc.fillText('grid 1 m',14,24);
+}
+let drag=-1;
+function evPos(e){const r=plan.getBoundingClientRect();return [(e.clientX-r.left)*plan.width/r.width,(e.clientY-r.top)*plan.height/r.height]}
+plan.addEventListener('pointerdown',e=>{const [mx,my]=evPos(e);let best=-1,bd=40;
+  PJ.forEach((p,k)=>{const a=rad(p.pos),[x,y]=w2p(p.dist*Math.sin(a),p.dist*Math.cos(a));const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=k}});
+  if(best>=0){drag=best;plan.setPointerCapture(e.pointerId)}});
+plan.addEventListener('pointermove',e=>{if(drag<0)return;const [mx,my]=evPos(e);const [X,Z]=p2w(mx,my);
+  const p=PJ[drag];p.pos=Math.round(norm360(deg(Math.atan2(-X,Z)))*2)/2;p.dist=Math.min(R-10,Math.round(Math.hypot(X,Z)/5)*5);
+  syncInputs(drag);update(false)});
+plan.addEventListener('pointerup',()=>{if(drag>=0){drag=-1;update(true)}});
+
+/* ===== Panel input ===== */
+const num=(k,f,l,st,v,extra='')=>`<label for="f${k}${f}"><span class="lt">${l}</span><input id="f${k}${f}" data-k="${k}" data-f="${f}" type="number" step="${st}" value="${Math.round(v*10)/10}" ${extra}></label>`;
+const XZ=p=>{const w=W3(p.dist,rad(p.pos),0);return [w[0],w[2]]};
+function buildList(){
+  const L=$('list');L.innerHTML='';
+  PJ.forEach((p,k)=>{const d=document.createElement('div');d.className='pj';d.style.setProperty('--c',`var(${COLORS[k%6]})`);
+    const [X,Z]=XZ(p);
+    d.innerHTML=`<header><b>${p.name}</b><button type="button" class="ghost" data-del="${k}" aria-label="Hapus ${p.name}">Hapus</button></header>
+    <div class="sec">Posisi lensa · XYZ (cm dari pusat dasar tabung)</div>
+    <div class="grid g3">${num(k,'X','<span class="ax x">X</span> ke 270° +',5,X)}${num(k,'h','<span class="ax y">Y</span> tinggi',5,p.h)}${num(k,'Z','<span class="ax z">Z</span> ke A (0°) +',5,Z)}</div>
+    <div class="grid">${num(k,'pos','Sudut (°)',0.5,norm360(p.pos))}${num(k,'dist','Jarak dari pusat',5,p.dist)}</div>
+    <div class="sec">Arah bidik</div>
+    <label for="f${k}aimMode">Mode<select id="f${k}aimMode" data-k="${k}" data-f="aimMode"><option value="lurus">Lurus ke dinding seberang</option><option value="sudut">Ke sudut tabung</option><option value="xyz">Ke titik XYZ</option></select></label>
+    <div class="grid" data-show="lurus sudut">${num(k,'aim','Sudut bidik (°)',0.5,p.aim)}${num(k,'aimH','Tinggi bidik',5,p.aimH)}</div>
+    <div class="grid g3" data-show="xyz">${num(k,'aimX','<span class="ax x">X</span> bidik',5,p.aimX)}${num(k,'aimY','<span class="ax y">Y</span> bidik',5,p.aimY)}${num(k,'aimZ','<span class="ax z">Z</span> bidik',5,p.aimZ)}</div>
+    <div class="sec">Lensa</div>
+    <div class="grid">${num(k,'throw','Throw ratio',0.01,p.throw)}${num(k,'shift','Lens shift V (%)',1,p.shift)}${num(k,'roll','Putar / roll (°)',0.5,p.roll||0)}
+    <label for="f${k}orient">Orientasi<select id="f${k}orient" data-k="${k}" data-f="orient"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></label></div>`;
+    L.appendChild(d); $(`f${k}orient`).value=p.orient; $(`f${k}aimMode`).value=p.aimMode; showAim(k);});
+  L.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{const k=+el.dataset.k,f=el.dataset.f,p=PJ[k];
+    if(f==='orient') p.orient=el.value;
+    else if(f==='aimMode'){p.aimMode=el.value; if(el.value==='xyz'){const T=W3(R,rad(p.pos+180),p.aimH);p.aimX=Math.round(T[0]);p.aimY=p.aimH;p.aimZ=Math.round(T[2]);syncInputs(k)} showAim(k)}
+    else{const v=parseFloat(el.value); if(isNaN(v)) return;
+      if(f==='X'||f==='Z'){let [X,Z]=XZ(p); if(f==='X')X=v; else Z=v; p.dist=Math.min(R-10,Math.hypot(X,Z)); p.pos=norm360(deg(Math.atan2(-X,Z))); syncInputs(k,f)}
+      else {p[f]=v; if(f==='pos'||f==='dist') syncInputs(k,f)}}
+    update(true)}));
+  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(PJ.length<=1)return;PJ.splice(+b.dataset.del,1);PJ.forEach((p,i)=>p.name='P'+(i+1));buildList();update(true)});
+}
+function showAim(k){const m=PJ[k].aimMode;document.querySelectorAll(`#list .pj:nth-child(${k+1}) [data-show]`).forEach(el=>el.hidden=!el.dataset.show.split(' ').includes(m));
+  const a=$(`f${k}aim`); if(a) a.disabled=m==='lurus';}
+function syncInputs(k,skip){const p=PJ[k],[X,Z]=XZ(p),vals={X,Z,pos:norm360(p.pos),dist:p.dist,aimX:p.aimX,aimY:p.aimY,aimZ:p.aimZ};
+  Object.entries(vals).forEach(([f,v])=>{if(f===skip)return;const el=$(`f${k}${f}`);if(el&&document.activeElement!==el)el.value=Math.round(v*10)/10})}
+$('add').onclick=()=>{if(PJ.length>=6)return;PJ.push(NEWP(PJ.length,0));buildList();update(true)};
+$('reset').onclick=()=>{PJ=DEF();buildList();update(true)};
+
+/* ===== Tabel + config ===== */
+function table(){
+  const rows=PJ.map((p,k)=>{const cv=COV[k];
+    const sl=cv.segs.length?cv.segs.map(([a,b])=>`x ${a}–${b}`).join(' + ')+` · y ${cv.y[0]}–${cv.y[1]}`:'—';
+    const ang=cv.segs.length?cv.segs.map(([a,b])=>`${f1(a/CW*360)}°–${f1(b/CW*360)}°`).join(' + '):'—';
+    return `<tr><td><span class="dot" style="--c:var(${COLORS[k%6]})"></span>${p.name}</td><td>${ang}</td><td>${sl}</td><td>${cv.bn?f1(cv.dens):'—'} px/cm</td><td>${cv.bn?f1(deg(Math.acos(Math.min(1,cv.cos)))):'—'}°</td><td>${f1(cv.bn/(GX*GY)*100)}%</td></tr>`});
+  $('tbl').innerHTML='<tr><th>Proyektor</th><th>Sudut kena</th><th>Slice composition (px)</th><th>Kerapatan di pita</th><th>Sudut datang rata²</th><th>Porsi pita</th></tr>'+rows.join('');
+  // coverage of band overall
+  let bandTot=0,bandCov=0,ov=0;
+  for(let j=0;j<GY;j++)for(let i=0;i<GX;i++){const xc=(i+.5)*C/GX,y=H-(j+.5)*H/GY; if(!inBand(xc,y))continue; bandTot++; let c=0; COV.forEach(cv=>c+=cv.cells[j*GX+i]); if(c)bandCov++; if(c>1)ov++}
+  const miss=bandTot-bandCov;
+  $('notes').innerHTML=`Pita tertutup <b>${f1(bandCov/bandTot*100)}%</b> · overlap ${f1(ov/bandTot*100)}% dari pita`+(miss>0?` · <span class="warn">${f1(miss/bandTot*100)}% pita belum kena proyektor (bagian kuning tanpa warna)</span>`:'');
+  return {bandCov:bandCov/bandTot,ov:ov/bandTot};
+}
+function config(sum){
+  const lines=['Z10 TABUNG · DATA SETUP PROYEKTOR (ViewSonic LS711HD · 1920×1080)','Composition 3240×1080 tampak dalam · 0° = titik A di kiri, sudut naik ke kanan','Proyeksi DINDING DALAM · sudut searah jarum jam dilihat dari atas (= kiri→kanan dilihat dari dalam) · Sumbu: X+ = ke arah 270°, Y+ = atas dari lantai, Z+ = ke arah titik A (0°) · titik 0 = pusat dasar tabung',''];
+  PJ.forEach((p,k)=>{const cv=COV[k];
+    const [X,Z]=XZ(p);const bid=p.aimMode==='xyz'?`titik X ${f1(p.aimX)} Y ${f1(p.aimY)} Z ${f1(p.aimZ)}`:p.aimMode==='sudut'?`sudut ${f1(p.aim)}° @ ${f1(p.aimH)} cm`:`lurus ke dinding seberang @ ${f1(p.aimH)} cm`;
+    lines.push(`${p.name}: lensa X ${f1(X)} · Y ${f1(p.h)} · Z ${f1(Z)} cm (sudut ${f1(norm360(p.pos))}°, jarak ${f1(p.dist)} dari pusat, ${f1(R-p.dist)} dari dinding) · bidik ${bid} · roll ${p.roll||0}° · throw ${p.throw} · ${p.orient} · shift ${p.shift}%`);
+    lines.push(`   kena: ${cv.segs.map(([a,b])=>`x ${a}–${b}`).join(' + ')||'—'} · y ${cv.y[0]}–${cv.y[1]} · ${cv.bn?f1(cv.dens):0} px/cm`)});
+  lines.push('',`Pita tertutup ${f1(sum.bandCov*100)}% · overlap ${f1(sum.ov*100)}%`,'','JSON:',JSON.stringify(PJ));
+  $('cfg').value=lines.join('\n');
+}
+$('copy').onclick=()=>{if(ROLE!=='admin')return;const t=$('cfg').value;const ok=()=>{$('toast').textContent='Data Setup tersalin.'};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok).catch(()=>{$('cfg').select();$('toast').textContent='Teks sudah terpilih, tekan Ctrl+C.'})}else{$('cfg').select();$('toast').textContent='Teks sudah terpilih, tekan Ctrl+C.'}};
+$('doImp').onclick=()=>{try{let t=$('imp').value;const i=t.indexOf('[');t=t.slice(i,t.lastIndexOf(']')+1);const a=JSON.parse(t);if(!Array.isArray(a)||!a.length)throw 0;PJ=a.map(fixP);buildList();update(true);$('impMsg').textContent='Config diterapkan.'}catch(e){$('impMsg').textContent='Format tidak dikenali. Tempel bagian JSON dari config.'}};
+
+/* ===== 3D ===== */
+let renderer,scene,camera,tex,mesh,frus=[],rotY=.3,rotX=.35,dist3=1600;
+const texC=document.createElement('canvas');texC.width=1620;texC.height=540;
+function init3D(){
+  if(!window.THREE){$('three').textContent='Tampilan 3D tidak bisa dimuat.';return}
+  const el=$('three');renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.setClearColor(0x0a0d11);el.appendChild(renderer.domElement);
+  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(40,1,10,20000);
+  scene.add(new THREE.AmbientLight(0xffffff,.9));
+  const grid=new THREE.GridHelper(4000,40,0x2a3440,0x1b232c);scene.add(grid);
+  const mkLbl=(t,col)=>{const c=document.createElement('canvas');c.width=128;c.height=64;const g=c.getContext('2d');g.fillStyle=col;g.font='700 44px Barlow, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(t,64,32);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));sp.scale.set(120,60,1);return sp};
+  [[[1,0,0],css('--ax'),'X'],[[0,1,0],css('--ay'),'Y'],[[0,0,1],css('--az'),'Z']].forEach(([d,col,t])=>{const Lg=t==='Y'?H+180:R+520;
+    const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(d[0]*Lg,d[1]*Lg,d[2]*Lg)]);
+    const ln=new THREE.Line(g,new THREE.LineBasicMaterial({color:new THREE.Color(col),depthTest:false}));ln.renderOrder=5;scene.add(ln);
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(14,40,16),new THREE.MeshBasicMaterial({color:new THREE.Color(col),depthTest:false}));cone.renderOrder=5;
+    cone.position.set(d[0]*Lg,d[1]*Lg,d[2]*Lg);if(t==='X')cone.rotation.z=-Math.PI/2;if(t==='Z')cone.rotation.x=Math.PI/2;scene.add(cone);
+    const lb=mkLbl(t+'+',col);lb.position.set(d[0]*(Lg+70),d[1]*(Lg+70),d[2]*(Lg+70));scene.add(lb)});
+  tex=new THREE.CanvasTexture(texC);
+  tex.wrapS=THREE.RepeatWrapping;tex.repeat.x=-1;tex.offset.x=1;
+  mesh=new THREE.Mesh(new THREE.CylinderGeometry(R,R,H,160,1,true),new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide}));mesh.position.y=H/2;scene.add(mesh);
+  const outer=new THREE.Mesh(new THREE.CylinderGeometry(R+1,R+1,H,64,1,true),new THREE.MeshBasicMaterial({color:0x111418,side:THREE.FrontSide,transparent:true,opacity:.15}));outer.position.y=H/2;scene.add(outer);
+  let dr=null;el.addEventListener('pointerdown',e=>{dr=[e.clientX,e.clientY];el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!dr)return;rotY-=(e.clientX-dr[0])*.008;rotX=Math.max(-.1,Math.min(1.5,rotX+(e.clientY-dr[1])*.006));dr=[e.clientX,e.clientY]});
+  el.addEventListener('pointerup',()=>dr=null);
+  el.addEventListener('wheel',e=>{e.preventDefault();dist3=Math.max(700,Math.min(6000,dist3*(1+e.deltaY*.001)))},{passive:false});
+  new ResizeObserver(()=>{const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}).observe(el);
+  (function loop(){requestAnimationFrame(loop);const d=dist3;camera.position.set(Math.sin(rotY)*d*Math.cos(rotX),H/2+Math.sin(rotX)*d,Math.cos(rotY)*d*Math.cos(rotX));camera.lookAt(0,H/2,0);renderer.render(scene,camera)})();
+}
+$('vFront').onclick=()=>{rotY=0;rotX=.12};$('vBack').onclick=()=>{rotY=Math.PI;rotX=.12};$('vTop').onclick=()=>{rotX=1.5};
+function update3D(){
+  if(!renderer)return;
+  const g=texC.getContext('2d');g.drawImage(comp,0,0,texC.width,texC.height);tex.needsUpdate=true;
+  frus.forEach(o=>{scene.remove(o);o.geometry&&o.geometry.dispose()});frus=[];
+  PJ.forEach((p,k)=>{const B=basis(p),col=new THREE.Color(css(COLORS[k%6]));const P=new THREE.Vector3(...B.P);
+    const box=new THREE.Mesh(new THREE.BoxGeometry(40,25,40),new THREE.MeshBasicMaterial({color:col}));box.position.copy(P);box.lookAt(...[B.P[0]+B.f[0],B.P[1]+B.f[1],B.P[2]+B.f[2]]);scene.add(box);frus.push(box);
+    const Ld=1.9*R, pts=[];const corners=[[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]];
+    const cs=corners.map(([sx,sy])=>{const w=Ld/B.T,h=w*B.ar;const v=[B.f[0]*Ld+B.r[0]*sx*w+B.u[0]*(sy+B.shift)*h,B.f[1]*Ld+B.r[1]*sx*w+B.u[1]*(sy+B.shift)*h,B.f[2]*Ld+B.r[2]*sx*w+B.u[2]*(sy+B.shift)*h];return new THREE.Vector3(B.P[0]+v[0],B.P[1]+v[1],B.P[2]+v[2])});
+    cs.forEach((c,i)=>{pts.push(P,c,c,cs[(i+1)%4])});
+    const ln=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.55}));scene.add(ln);frus.push(ln);
+    const tgt=p.aimMode==='xyz'?[p.aimX,p.aimY,p.aimZ]:null; if(tgt){const sp=new THREE.Mesh(new THREE.SphereGeometry(12,12,8),new THREE.MeshBasicMaterial({color:col}));sp.position.set(...tgt);scene.add(sp);frus.push(sp);
+      const al=new THREE.Line(new THREE.BufferGeometry().setFromPoints([P,new THREE.Vector3(...tgt)]),new THREE.LineDashedMaterial({color:col,dashSize:20,gapSize:12}));al.computeLineDistances();scene.add(al);frus.push(al)}});
+}
+
+/* ===== Loop update ===== */
+let pend=null;
+function update(full){compute();drawPlan();if(full||!pend){pend=requestAnimationFrame(()=>{pend=null;drawComp();const s=table();config(s);update3D();schedulePV()})}save()}
+
+/* ===== Output proyektor (warp) ===== */
+const MASK=document.createElement('canvas');MASK.width=CW;MASK.height=CH;
+(function(){const g=MASK.getContext('2d'),img=g.createImageData(CW,CH),d=img.data;
+  for(let py=0;py<CH;py++){const y=H-(py+.5)/KY;for(let px=0;px<CW;px++){const o=(py*CW+px)*4,v=inBand((px+.5)/KX,y)?255:0;d[o]=d[o+1]=d[o+2]=v;d[o+3]=255}}g.putImageData(img,0,0)})();
+const GUIDE=document.createElement('canvas');GUIDE.width=CW;GUIDE.height=CH;
+(function(){const g=GUIDE.getContext('2d');g.drawImage(base,0,0);})();
+let SRC=null,SRCM=null;
+function srcData(){if(!SRC){SRC=GUIDE.getContext('2d').getImageData(0,0,CW,CH).data;SRCM=MASK.getContext('2d').getImageData(0,0,CW,CH).data}}
+function renderProj(p,which,outW,outH){
+  srcData();const B=basis(p),land=p.orient!=='portrait';
+  const W=outW||(land?1920:1080),Hh=outH||(land?1080:1920);
+  const c=document.createElement('canvas');c.width=W;c.height=Hh;const g=c.getContext('2d'),img=g.createImageData(W,Hh),d=img.data;
+  const src=which==='mask'?SRCM:SRC;const Px=B.P[0],Py=B.P[1],Pz=B.P[2],c0=Px*Px+Pz*Pz-R*R;
+  for(let j=0;j<Hh;j++){const ny=.5-(j+.5)/Hh;
+    for(let i=0;i<W;i++){const nx=(i+.5)/W-.5;
+      const a1=nx/B.T,a2=(ny+B.shift)*B.ar/B.T;
+      const dx=B.f[0]+B.r[0]*a1+B.u[0]*a2,dy=B.f[1]+B.r[1]*a1+B.u[1]*a2,dz=B.f[2]+B.r[2]*a1+B.u[2]*a2;
+      const A=dx*dx+dz*dz,Bq=2*(Px*dx+Pz*dz),disc=Bq*Bq-4*A*c0;const o=(j*W+i)*4;d[o+3]=255;
+      if(disc<0||A<1e-9)continue;const t=(-Bq+Math.sqrt(disc))/(2*A);if(t<=0||c0>=0)continue;
+      const y=Py+t*dy;if(y<0||y>H)continue;const X=Px+t*dx,Z=Pz+t*dz;
+      let th=Math.atan2(-X,Z);if(th<0)th+=2*Math.PI;
+      const sx=Math.min(CW-1,Math.floor(th/(2*Math.PI)*CW)),sy=Math.min(CH-1,Math.max(0,Math.floor((H-y)*KY)));
+      const q=(sy*CW+sx)*4;d[o]=src[q];d[o+1]=src[q+1];d[o+2]=src[q+2]}}
+  g.putImageData(img,0,0);return c;
+}
+let pvT=null;
+function schedulePV(){clearTimeout(pvT);pvT=setTimeout(drawPV,250)}
+function drawPV(){const el=$('pv');el.innerHTML='';
+  PJ.forEach((p,k)=>{const f=document.createElement('figure');f.style.setProperty('--c',`var(${COLORS[k%6]})`);
+    const land=p.orient!=='portrait';const cv=renderProj(p,'guide',land?480:270,land?270:480);cv.style.aspectRatio=land?'16/9':'9/16';
+    const cap=document.createElement('figcaption');cap.textContent=`${p.name} · ${f1(norm360(p.pos))}° · ${land?'landscape':'portrait (putar 90° di output)'}`;
+    f.appendChild(cv);f.appendChild(cap);el.appendChild(f)});
+}
+function sliceCanvas(cv){const segs=cv.segs;if(!segs.length)return null;const w=segs.reduce((s,[a,b])=>s+b-a,0),h=cv.y[1]-cv.y[0];
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');let x=0;
+  segs.forEach(([a,b])=>{g.drawImage(GUIDE,a,cv.y[0],b-a,h,x,0,b-a,h);x+=b-a});return c}
+
+/* ===== Kanvas pita (guide / mask / overlay) ===== */
+const LW=Math.round(SPAN*KX); // 4654
+const PTS={A:[0,0],B:[BASE,0],F1:[LEG*Math.cos(TH),LEG*Math.sin(TH)],F2:[BASE+MID*Math.cos(TH),MID*Math.sin(TH)],D:[L*Math.cos(TH),TOP],C:[BASE+L*Math.cos(TH),TOP]};
+const REG=[[['A','B','F1'],'#f2c518'],[['F1','B','F2','D'],'#e0a800'],[['D','F2','C'],'#f2c518']];
+const f1c=v=>(Math.round(v*10)/10+0).toLocaleString('id-ID');
+function bandRange(X){const lo=Math.max(0,(X-BASE)*TN),hi=Math.min(TOP,X*TN);return hi-lo>1?[lo,hi]:null}
+function drawBand(cv,layout,mode){
+  const W=cv.width,g=cv.getContext('2d');g.clearRect(0,0,W,CH);
+  const shifts=layout==='long'?[0]:[0,-C];
+  const P=(x,y,sh)=>[(x+sh)*KX,(H-y)*KY];
+  if(mode==='mask'){g.fillStyle='#000';g.fillRect(0,0,W,CH)}
+  if(mode==='guide'){g.fillStyle='#202833';g.fillRect(0,0,W,CH)}
+  // grid sudut
+  if(mode!=='mask'){g.lineWidth=2;g.strokeStyle=mode==='overlay'?'rgba(255,255,255,.35)':'rgba(255,255,255,.12)';g.font='600 24px Barlow, sans-serif';
+    for(let a=0;a*CW/360<=W+1;a+=30){const x=a/360*CW;g.beginPath();g.moveTo(x,0);g.lineTo(x,CH);g.stroke();
+      g.fillStyle='rgba(231,236,241,.75)';g.textAlign=x<20?'left':x>W-20?'right':'center';g.fillText((a%360)+'°',x+(x<20?6:x>W-20?-6:0),CH-12)}
+    const yT=(H-TOP)*KY;g.setLineDash([14,10]);g.strokeStyle='rgba(255,255,255,.4)';g.beginPath();g.moveTo(0,yT);g.lineTo(W,yT);g.stroke();g.setLineDash([]);
+    g.fillStyle='rgba(231,236,241,.8)';g.textAlign='right';g.fillText('367,4 cm · batas atas pita',W-10,yT-10)}
+  shifts.forEach(sh=>{
+    REG.forEach(([ks,col])=>{g.beginPath();ks.forEach((k,i)=>{const [x,y]=P(...PTS[k],sh);i?g.lineTo(x,y):g.moveTo(x,y)});g.closePath();
+      if(mode==='mask'){g.fillStyle='#fff';g.fill()} else if(mode==='guide'){g.fillStyle=col;g.fill()}});
+    if(mode!=='mask'){g.strokeStyle=mode==='overlay'?'#ffd400':'#111';g.lineWidth=3;g.beginPath();['A','B','C','D'].forEach((k,i)=>{const [x,y]=P(...PTS[k],sh);i?g.lineTo(x,y):g.moveTo(x,y)});g.closePath();g.stroke();
+      g.strokeStyle='#1f8fff';g.lineWidth=3;[['F1','B'],['D','F2']].forEach(([a,b])=>{const p1=P(...PTS[a],sh),p2=P(...PTS[b],sh);g.beginPath();g.moveTo(...p1);g.lineTo(...p2);g.stroke()});
+      Object.entries(PTS).forEach(([k,v])=>{const [x,y]=P(...v,sh);if(x<-5||x>W+5)return;g.fillStyle='#fff';g.beginPath();g.arc(x,y,7,0,7);g.fill();g.font='700 26px Barlow, sans-serif';g.textAlign=x>W-60?'right':'left';g.fillStyle=mode==='overlay'?'#fff':'#fff';g.strokeStyle='#000';g.lineWidth=4;const tx=x>W-60?x-12:x+12,ty=y>CH-30?y-14:y-12;g.strokeText(k,tx,ty);g.fillText(k,tx,ty)})}
+  });
+  if(mode==='mask')return;
+  // panah tegak per 30°
+  g.lineWidth=4;
+  for(let a=0;a*CW/360<=W;a+=30){const x=a/360*CW;
+    const Xs=layout==='long'?[x/KX]:[0,1,2].map(k=>x/KX+k*C).filter(X=>X<=SPAN);
+    Xs.forEach(X=>{const r=bandRange(X);if(!r)return;const y0=(H-r[0])*KY,y1=(H-r[1])*KY;
+      g.strokeStyle='#e5382b';g.fillStyle='#e5382b';g.beginPath();g.moveTo(x,y0);g.lineTo(x,y1+18);g.stroke();
+      g.beginPath();g.moveTo(x,y1);g.lineTo(x-9,y1+20);g.lineTo(x+9,y1+20);g.fill();g.beginPath();g.moveTo(x-10,y0);g.lineTo(x+10,y0);g.stroke();
+      g.save();g.translate(x+8,(y0+y1)/2);g.rotate(-Math.PI/2);g.font='700 18px Barlow, sans-serif';g.textAlign='center';g.fillStyle=mode==='overlay'?'#fff':'#111';g.fillText(`${f1c(r[0])}–${f1c(r[1])} cm`,0,14);g.restore()})}
+  if(layout==='long'){const x=CW;g.strokeStyle='#46b6ff';g.lineWidth=5;g.setLineDash([24,14]);g.beginPath();g.moveTo(x,0);g.lineTo(x,CH);g.stroke();g.setLineDash([]);
+    g.fillStyle='#46b6ff';g.font='700 28px Barlow, sans-serif';g.textAlign='left';g.fillText('x 3240 · bagian kanan → geser −3240 px (lilitan atas)',x+14,40);
+    g.textAlign='right';g.fillText('lilitan 1 (x 0–3240) ←',x-14,40)}
+  if(mode==='guide'){g.fillStyle='rgba(231,236,241,.85)';g.font='700 30px Barlow Condensed, sans-serif';g.textAlign='left';
+    g.fillText(layout==='long'?'CANVAS PANJANG 4654 × 1080 · tampak dalam · 1 cm = 2,578 px':'CANVAS RESOLUME 3240 × 1080 · tampak dalam',16,40)}
+}
+function drawGrid(cv){const g=cv.getContext('2d'),W=cv.width;g.fillStyle='#000';g.fillRect(0,0,W,CH);
+  for(let a=0;a<=360;a+=15){const x=a/360*W;g.strokeStyle=a%90===0?'#fff':a%30===0?'#aaa':'#555';g.lineWidth=a%90===0?4:2;g.beginPath();g.moveTo(x,0);g.lineTo(x,CH);g.stroke();
+    if(a%30===0&&a<360){g.fillStyle='#fff';g.font='700 34px Barlow, sans-serif';g.textAlign='left';g.fillText(a+'°',x+8,40)}}
+  for(let h=0;h<=H;h+=50){const y=(H-h)*KY;g.strokeStyle=h%100===0?'#bbb':'#555';g.lineWidth=h%100===0?3:1.5;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();
+    g.fillStyle='#ddd';g.font='600 24px JetBrains Mono, monospace';g.textAlign='right';if(h%100===0&&h>0)g.fillText(h+' cm',W-10,y-8)}
+  const yT=(H-TOP)*KY;g.strokeStyle='#ffd400';g.lineWidth=4;g.setLineDash([20,12]);g.beginPath();g.moveTo(0,yT);g.lineTo(W,yT);g.stroke();g.setLineDash([]);
+  [0,-C].forEach(sh=>{g.strokeStyle='#ffd400';g.lineWidth=4;g.beginPath();['A','B','C','D'].forEach((k,i)=>{const x=(PTS[k][0]+sh)*KX,y=(H-PTS[k][1])*KY;i?g.lineTo(x,y):g.moveTo(x,y)});g.closePath();g.stroke()});
+  for(let a=15;a<360;a+=30)for(let h=50;h<H;h+=100){const x=a/360*W,y=(H-h)*KY;g.strokeStyle='#0f0';g.lineWidth=2;g.beginPath();g.arc(x,y,22,0,7);g.stroke()}
+  g.fillStyle='#fff';g.font='700 40px Barlow Condensed, sans-serif';g.textAlign='center';g.fillText('Z10 TABUNG · TEST GRID 3240 × 1080 · garis 15° / 50 cm',W/2,CH/2)}
+const CVL=$('cvLong'),CVR=$('cvRes');drawBand(CVL,'long','guide');drawBand(CVR,'res','guide');
+function makeCanvas(layout,mode){const c=document.createElement('canvas');c.width=layout==='long'?LW:CW;c.height=CH;mode==='grid'?drawGrid(c):drawBand(c,layout,mode);return c}
+const PNGNAME={'long:guide':`AE_CanvasPanjang_Guide_${LW}x1080.png`,'long:mask':`AE_CanvasPanjang_Mask_${LW}x1080.png`,'long:overlay':`AE_CanvasPanjang_Overlay_${LW}x1080.png`,
+  'res:guide':'Z10_Guide_3240x1080.png','res:mask':'Z10_Mask_3240x1080.png','res:overlay':'Z10_Overlay_3240x1080.png','res:grid':'Z10_TestGrid_3240x1080.png'};
+
+/* ===== Teks Setting Resolume, Panduan AE, Script AE ===== */
+function circOverlap(s1,s2){const out=[];const norm=segs=>segs.flatMap(([a,b])=>[[a,b]]);
+  norm(s1).forEach(([a,b])=>norm(s2).forEach(([c,d])=>{const lo=Math.max(a,c),hi=Math.min(b,d);if(hi>lo)out.push([lo,hi])}));return out}
+function resolumeText(){
+  const L=[];const ln=t=>L.push(t);
+  ln('SETTING RESOLUME · Z10 TABUNG (proyeksi dinding dalam)');ln('Dibuat: '+new Date().toLocaleString('id-ID'));ln('');
+  ln('1) COMPOSITION');ln('   Composition > Settings: Width 3240 · Height 1080 · Frame rate 25');
+  ln('   Isi: render comp "03 RENDER Resolume 3240x1080" dari After Effects (codec DXV3).');ln('');
+  ln('2) MASK PITA (opsional, supaya area di luar pita selalu hitam)');ln('   Layer paling atas: Z10_Mask_3240x1080.png · Blend mode: Multiply · Opacity 100%');ln('');
+  ln('3) ADVANCED OUTPUT (Output > Advanced…)');ln('   Hapus screen bawaan, tambah '+PJ.length+' screen. Tiap screen: Device = proyektor, resolusi 1920 × 1080.');ln('');
+  PJ.forEach((p,k)=>{const cv=COV[k],[X,Z]=XZ(p);
+    ln(`   SCREEN ${p.name}  (proyektor di sudut ${f1c(norm360(p.pos))}°, X ${f1c(X)} · Y ${f1c(p.h)} · Z ${f1c(Z)} cm, ${p.orient})`);
+    ln('   Tab "Input Selection": buat slice berikut (angka dalam pixel composition)');
+    if(!cv.segs.length) ln('     (proyektor ini belum mengenai dinding)');
+    cv.segs.forEach(([a,b],i)=>ln(`     Slice ${p.name}${cv.segs.length>1?String.fromCharCode(97+i):''}:  X ${a}   Y ${cv.y[0]}   Width ${b-a}   Height ${cv.y[1]-cv.y[0]}`));
+    ln('   Tab "Output Transformation": susun slice berdampingan sesuai urutan di atas (slice a di kiri, b di kanan),');
+    ln(`     aktifkan Bezier/Grid warp, lalu cocokkan dengan gambar ${p.name}_Output_1920x1080.png (Paket Proyektor).`);
+    ln(`     Opsional: pakai ${p.name}_Mask_1920x1080.png sebagai mask slice.`);ln('')});
+  ln('4) EDGE BLEND (Soft Edge, Resolume Arena)');
+  let any=false;
+  for(let i=0;i<PJ.length;i++)for(let j=i+1;j<PJ.length;j++){let ov=circOverlap(COV[i].segs,COV[j].segs);
+    // gabungkan overlap yang menyeberang jahitan 0°/360°
+    const e=ov.find(([a,b])=>b===CW),st=ov.find(([a,b])=>a===0);
+    let groups=ov.filter(o=>o!==e&&o!==st).map(o=>[o]); if(e&&st)groups.push([e,st]); else {if(e)groups.push([e]); if(st)groups.push([st]);}
+    groups.forEach(gr=>{any=true;const w=gr.reduce((t,[a,b])=>t+b-a,0);
+      ln(`   ${PJ[i].name} ↔ ${PJ[j].name}: overlap ${gr.map(([a,b])=>'x '+a+'–'+b).join(' + ')}${gr.length>1?' (melewati jahitan 0°)':''} = ${w} px · ${f1c(w/CW*360)}° → soft edge ±${w} px di sisi yang bertemu, gamma 2,2 (titik awal)`)})}
+  if(!any) ln('   Tidak ada overlap. Geser proyektor supaya tiap sambungan overlap ±150 px.');
+  ln('');ln('5) TEST');ln('   Mainkan Z10_TestGrid_3240x1080.png. Garis 15° harus tegak, garis 50 cm harus mendatar, lingkaran hijau bulat.');
+  ln('');ln('Acuan sudut: 0° = titik A (kiri composition), naik ke kanan = searah jarum jam dilihat dari atas.');
+  return L.join('\r\n')}
+function aeGuideText(){return ['PANDUAN AFTER EFFECTS · Z10 TABUNG','',
+  'Cara cepat (otomatis):','1. Ekstrak ZIP ini ke satu folder.','2. AE > File > Scripts > Run Script File… pilih Z10_Setup_AE.jsx.',
+  '3. Script membuat folder "Z10 Tabung" berisi:','   01 EDIT Canvas Panjang 4654x1080  → taruh & animasikan konten di sini (guide/overlay = guide layer, tidak ikut render)',
+  '   02 MASKED Canvas Panjang          → otomatis: konten dipotong mask pita','   03 RENDER Resolume 3240x1080      → otomatis: lilitan 1 (x 0) + lilitan 2 (geser −3240). Render comp ini.','',
+  'Cara manual:','- Comp A 4654×1080: konten + AE_CanvasPanjang_Mask sebagai Luma Matte → precomp.',
+  '- Comp B 3240×1080: masukkan precomp 2×. Layer 1 Position X = 2327, layer 2 Position X = 2327 − 3240 = −913. Y = 540.','',
+  'Aturan inti: semua yang ada di x ≥ 3240 di canvas panjang muncul di x − 3240 pada canvas Resolume (lilitan atas). Pita tidak menumpuk, jadi aman.',
+  'Skala: 1 cm = 2,578 px (horizontal) · 2,571 px (vertikal) · batas atas pita y = 135 px.','Konten dibuat TEGAK (tidak ikut miring pita) supaya tegak di tabung.'].join('\r\n')}
+function aeScript(){const lg=`AE_CanvasPanjang_Guide_${LW}x1080.png`,lm=`AE_CanvasPanjang_Mask_${LW}x1080.png`,lo=`AE_CanvasPanjang_Overlay_${LW}x1080.png`;
+return `// Z10 Tabung · setup comp otomatis (jalankan via File > Scripts > Run Script File)
+(function(){
+  var dir = File($.fileName).parent;
+  function imp(n){var f=new File(dir.fsName+"/"+n); if(!f.exists){alert("File tidak ditemukan: "+n+"\\nTaruh script ini satu folder dengan PNG-nya."); return null;} return app.project.importFile(new ImportOptions(f));}
+  app.beginUndoGroup("Z10 Tabung Setup");
+  var W=${LW}, H=1080, RW=3240, FPS=25, DUR=60;
+  var fold = app.project.items.addFolder("Z10 Tabung");
+  var gL=imp("${lg}"), mL=imp("${lm}"), oL=imp("${lo}"), oR=imp("Z10_Overlay_3240x1080.png");
+  if(!gL||!mL){app.endUndoGroup();return;}
+  var edit = app.project.items.addComp("01 EDIT Canvas Panjang "+W+"x"+H, W, H, 1, DUR, FPS);
+  var a1 = edit.layers.add(gL); a1.guideLayer=true; a1.name="GUIDE pita (tidak ikut render)"; a1.moveToEnd(); a1.locked=true;
+  if(oL){var a2=edit.layers.add(oL); a2.guideLayer=true; a2.name="OVERLAY garis (tidak ikut render)"; a2.locked=true;}
+  var masked = app.project.items.addComp("02 MASKED Canvas Panjang", W, H, 1, DUR, FPS);
+  var c1 = masked.layers.add(edit); var m1 = masked.layers.add(mL); m1.name="MASK pita";
+  try{ c1.setTrackMatte(m1, TrackMatteType.LUMA); }catch(e){ c1.trackMatteType = TrackMatteType.LUMA; }
+  var rend = app.project.items.addComp("03 RENDER Resolume "+RW+"x"+H, RW, H, 1, DUR, FPS);
+  var l1 = rend.layers.add(masked); l1.name="Lilitan 1 (x 0-3240)"; l1.property("ADBE Transform Group").property("ADBE Position").setValue([W/2, H/2]);
+  var l2 = rend.layers.add(masked); l2.name="Lilitan 2 (x 3240-"+W+" geser -3240)"; l2.property("ADBE Transform Group").property("ADBE Position").setValue([W/2-RW, H/2]);
+  if(oR){var g3=rend.layers.add(oR); g3.guideLayer=true; g3.name="OVERLAY Resolume (tidak ikut render)"; g3.locked=true;}
+  var items=[edit,masked,rend,gL,mL]; if(oL)items.push(oL); if(oR)items.push(oR);
+  for(var i=0;i<items.length;i++) items[i].parentFolder=fold;
+  edit.openInViewer();
+  app.endUndoGroup();
+  alert("Z10 siap.\\n01 EDIT = tempat edit konten\\n03 RENDER = render untuk Resolume (3240x1080)");
+})();
+`}
+
+/* ===== Paket output (ZIP) ===== */
+const toBlob=c=>new Promise(r=>c.toBlob(r,'image/png'));
+const txtBlob=t=>new Blob([t],{type:'text/plain;charset=utf-8'});
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000)}
+async function packFiles(kind,msg){const F=[];const add=async(n,c)=>F.push([n,await toBlob(c)]);const tick=t=>{msg.textContent=t;return new Promise(r=>setTimeout(r,15))};
+  if(kind==='resolume'||kind==='all'){await tick('Paket Resolume…');
+    await add('Z10_Guide_3240x1080.png',makeCanvas('res','guide'));await add('Z10_Mask_3240x1080.png',makeCanvas('res','mask'));await add('Z10_TestGrid_3240x1080.png',makeCanvas('res','grid'));await add('Z10_Cakupan_Proyektor_3240x1080.png',comp);
+    for(let k=0;k<PJ.length;k++){const sc=sliceCanvas(COV[k]);if(sc)await add(`${PJ[k].name}_Slice_${COV[k].segs.map(([a,b])=>a+'-'+b).join('+')}.png`,sc)}
+    F.push(['Setting_Resolume.txt',txtBlob(resolumeText())])}
+  if(kind==='ae'||kind==='all'){await tick('Paket After Effects…');
+    for(const k of ['long:guide','long:mask','long:overlay','res:guide','res:mask','res:overlay']){const [l,m]=k.split(':');if(kind==='all'&&l==='res'&&m!=='overlay')continue;await add(PNGNAME[k],makeCanvas(l,m))}
+    F.push(['Z10_Setup_AE.jsx',txtBlob(aeScript())]);F.push(['Panduan_After_Effects.txt',txtBlob(aeGuideText())])}
+  if(kind==='proj'||kind==='all'){for(let k=0;k<PJ.length;k++){const p=PJ[k];await tick(`Render ${p.name}…`);
+      await add(`${p.name}_Output_1920x1080.png`,renderProj(p,'guide'));await add(`${p.name}_Mask_1920x1080.png`,renderProj(p,'mask'))}}
+  if(kind==='all'){F.push(['Data_Setup.txt',txtBlob($('cfg').value)]);F.push(['Data_Setup.json',new Blob([JSON.stringify({proyektor:PJ,cakupan:COV.map((c,k)=>({nama:PJ[k].name,slice:c.segs,y:c.y,px_per_cm:Math.round(c.dens*100)/100}))},null,1)],{type:'application/json'})])}
+  return F}
+const PACKNAME={resolume:'Z10_Paket_Resolume',ae:'Z10_Paket_AfterEffects',proj:'Z10_Paket_Proyektor',all:'Z10_Semua'};
+document.querySelectorAll('[data-pack]').forEach(b=>b.onclick=async()=>{if(ROLE!=='admin')return;const m=$('expMsg');document.querySelectorAll('[data-pack]').forEach(x=>x.disabled=true);
+  try{const F=await packFiles(b.dataset.pack,m);const stamp=new Date().toISOString().slice(0,16).replace(/[-:]/g,'').replace('T','_');const name=`${PACKNAME[b.dataset.pack]}_${stamp}.zip`;
+    if(!window.JSZip)throw new Error('library ZIP belum termuat, cek koneksi internet');
+    const z=new JSZip();F.forEach(([n,bl])=>z.file(n,bl));m.textContent='Membuat ZIP…';dl(await z.generateAsync({type:'blob'}),name);m.textContent=`${name} siap (${F.length} file).`}
+  catch(e){m.textContent='Export gagal: '+(e&&e.message||e)}
+  document.querySelectorAll('[data-pack]').forEach(x=>x.disabled=false)});
+document.querySelectorAll('[data-png]').forEach(b=>b.onclick=async()=>{if(ROLE!=='admin')return;const [l,m]=b.dataset.png.split(':');dl(await toBlob(makeCanvas(l,m)),PNGNAME[b.dataset.png])});
+
+/* ===== Pintu masuk + total kunjungan ===== */
+let ROLE='none';
+const H_SHA='fdbe3b4dfa489766ce76c9c893ce9ee2a15dfaf6e8aceac13881838e0730ebf6', H_FNV=0x63e8a007;
+const fnv=t=>{let h=0x811c9dc5;for(const c of new TextEncoder().encode(t)){h^=c;h=Math.imul(h,0x01000193)>>>0}return h};
+async function isAdminCode(t){t=(t||'').trim().toUpperCase();
+  try{if(crypto&&crypto.subtle){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')===H_SHA}}catch(e){}
+  return fnv(t)===H_FNV}
+const ss={get:k=>{try{return sessionStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch(e){}},del:k=>{try{sessionStorage.removeItem(k)}catch(e){}}};
+async function visits(count){try{const r=await fetch('/api/visit',{method:count?'POST':'GET',cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();$('visits').textContent=(j.total||0).toLocaleString('id-ID')}catch(e){$('visits').textContent='—'}}
+function enter(role){ROLE=role;document.body.dataset.role=role;$('roleBadge').textContent=role==='admin'?'Admin':'Umum';ss.set('z10_role',role);
+  if(role==='umum'&&!ss.get('z10_counted')){ss.set('z10_counted','1');visits(true)} else visits(false);
+  requestAnimationFrame(()=>{window.dispatchEvent(new Event('resize'))})}
+$('gIn').onclick=()=>enter('umum');
+$('gForm').onsubmit=async e=>{e.preventDefault();if(await isAdminCode($('gCode').value)){$('gErr').textContent='';$('gCode').value='';enter('admin')}else $('gErr').textContent='Kode tidak dikenali. Cek lagi, atau masuk tanpa kode.'};
+$('logout').onclick=()=>{ss.del('z10_role');ROLE='none';document.body.dataset.role='none';$('gCode').value=''};
+
+function boot(){if(!document.body.dataset.role)document.body.dataset.role='none';init3D();buildList();update(true);const r=ss.get('z10_role');if(r==='admin'||r==='umum')enter(r)}
+boot();
+</script>
+
+</body></html>
